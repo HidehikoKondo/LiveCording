@@ -32,7 +32,7 @@ function regist() {
     let date = document.getElementById("date").value;
     let amount = document.getElementById("amount").value;
     let memo = document.getElementById("memo").value;
-    let cateogry = document.getElementById("category").value;
+    let category = document.getElementById("category").value;
 
     //ラジオボタンが収入を選択時はカテゴリを収入とする
     if (balance == "収入") {
@@ -42,6 +42,8 @@ function regist() {
     //データベースにデータを登録する
     insertData(balance, date, category, amount, memo);
 
+    //入手金一覧を作成
+    createList();
 }
 
 //データの挿入
@@ -55,6 +57,7 @@ function insertData(balance, date, category, amount, memo) {
         id: uniqueID,
         balance: balance,
         data: String(date),
+        category: category,
         amount: amount,
         memo: memo,
     }
@@ -106,7 +109,78 @@ function createList() {
         store.getAll().onsuccess = function (data) {
             console.log(data.target.result);
             let rows = data.target.result;
+
+            let section = document.getElementById("list");
+            //入出金一覧のテーブルを作る
+            //バッククオートでヒアドキュメント
+            let table = `
+                <table>
+                    <tr>
+                        <th>日付</th>
+                        <th>収支</th>
+                        <th>カテゴリ</th>
+                        <th>金額</th>
+                        <th>メモ</th>
+                        <th>削除</th>
+                    </tr>
+            `;
+
+            //入出金のデータの表示
+            rows.forEach((element) => {
+                console.log(element);
+                table += `
+                    <tr>
+                        <td>${element.data}</td>
+                        <td>${element.balance}</td>
+                        <td>${element.category}</td>
+                        <td>${element.amount}</td>
+                        <td>${element.memo}</td>
+                        <td><button onclick="deleteData('${element.id}')">×</button></td>
+                    </tr>
+                `;
+            });
+            table += `</table>`;
+            section.innerHTML = table;
+
+            //円グラフの作成
+            createPieChart(rows);
         }
     }
+}
 
+//データの削除
+function deleteData(id) {
+    //データベースを開く
+    let database = indexedDB.open(dbName, dbVersion);
+    database.onupgradeneeded = function (event) {
+        let db = event.target.result;
+    }
+
+    //開いたら削除実行
+    database.onsuccess = function (event) {
+        let db = event.target.result;
+        let transaction = db.transaction(storeName, "readwrite");
+        transaction.oncomplete = function (event) {
+            console.log("トランザクション完了");
+        }
+        transaction.onerror = function (event) {
+            console.log("トランザクションエラー");
+        }
+        let store = transaction.objectStore(storeName);
+
+        let deleteData = store.delete(id);
+        deleteData.onsuccess = function (event) {
+            console.log("削除成功");
+            createList();
+        }
+        deleteData.onerror = function (event) {
+            console.log("削除失敗");
+        }
+        db.close();
+    }
+
+    //データベースの開けなかった時の処理
+    database.onerror = function (event) {
+        console.log("データベースに接続できませんでした");
+    }
 }

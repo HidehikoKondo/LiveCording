@@ -15,6 +15,10 @@
     <!---indexedDB.jsの読み込み-->
     <script src="indexedDB.js"></script>
 
+    <!--chart.jsの読み込み-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script src="graph.js"></script>
+
 </head>
 
 <body>
@@ -75,7 +79,8 @@
         <!-- グラフ-->
         <h2 id="graph">グラフ</h2>
         <section>
-
+            <!--円グラフをここに表示-->
+            <canvas id="pieChart"></canvas>
         </section>
     </article>
     <footer>
